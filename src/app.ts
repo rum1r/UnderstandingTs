@@ -145,7 +145,14 @@ class ProjectList {
 
     // プロジェクト追加時実行する関数の登録
     projectState.addListener((projects: Project[]) => {
-      this.assignedProjects = projects;
+      // 関数のtrue false で追加かどうかが決まる
+      const relevantProjects = projects.filter(prj => {
+        if (this.type == 'active') {
+          return prj.status === ProjectStatus.Active;
+        }
+        return prj.status === ProjectStatus.Finished;
+      })
+      this.assignedProjects = relevantProjects; // `relevant`関連する れればんと
       this.renderProjects();
     })
 
@@ -157,6 +164,7 @@ class ProjectList {
    */
   private renderProjects() {
     const listEl = document.getElementById(`${this.type}-project-list`)! as HTMLUListElement;
+    listEl.innerHTML = '';
     for (const prjItem of this.assignedProjects) {
       const listItem = document.createElement('li');
       listItem.textContent = prjItem.title;
