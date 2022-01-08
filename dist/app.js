@@ -115,7 +115,8 @@ class ProjectItem extends Component {
         }
     }
     dragStartHandler(event) {
-        console.log(event);
+        event.dataTransfer.setData("text/plain", this.project.id);
+        event.dataTransfer.effectAllowed = "move";
     }
     dragEndHndler(_) {
         console.log("Drag終了");
@@ -144,20 +145,24 @@ class ProjectList extends Component {
         this.configure();
         this.renderContent();
     }
-    dragOverHandler(_) {
-        const listEl = this.element.querySelector('ul');
-        listEl.classList.add('droppable');
+    dragOverHandler(event) {
+        if (event.dataTransfer && event.dataTransfer.types[0] === "text/plain") {
+            event.preventDefault();
+            const listEl = this.element.querySelector("ul");
+            listEl.classList.add("droppable");
+        }
     }
-    dropHandler(_) {
+    dropHandler(event) {
+        console.log(event.dataTransfer.getData('text/plain'));
     }
     dragLeaveHandler(_) {
-        const listEl = this.element.querySelector('ul');
-        listEl.classList.remove('droppable');
+        const listEl = this.element.querySelector("ul");
+        listEl.classList.remove("droppable");
     }
     configure() {
-        this.element.addEventListener('dragover', this.dragOverHandler);
-        this.element.addEventListener('drop', this.dropHandler);
-        this.element.addEventListener('dragleave', this.dragLeaveHandler);
+        this.element.addEventListener("dragover", this.dragOverHandler);
+        this.element.addEventListener("drop", this.dropHandler);
+        this.element.addEventListener("dragleave", this.dragLeaveHandler);
         projectState.addListener((projects) => {
             const relevantProjects = projects.filter((prj) => {
                 if (this.type == "active") {

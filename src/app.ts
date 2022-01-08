@@ -203,7 +203,9 @@ class ProjectItem
   }
   @autobind
   dragStartHandler(event: DragEvent): void {
-    console.log(event);
+    // ドラッグ時データ設定できる
+    event.dataTransfer!.setData("text/plain", this.project.id);
+    event.dataTransfer!.effectAllowed = "move"; // 移動のエフェクト
   }
 
   @autobind
@@ -244,26 +246,28 @@ class ProjectList
     this.renderContent();
   }
   @autobind
-  dragOverHandler(_: DragEvent): void {
-    const listEl = this.element.querySelector('ul')!;
-    listEl.classList.add('droppable');
+  dragOverHandler(event: DragEvent): void {
+    if (event.dataTransfer && event.dataTransfer.types[0] === "text/plain") {
+      event.preventDefault(); // Dropを許可する。privent=防ぐ
+      const listEl = this.element.querySelector("ul")!;
+      listEl.classList.add("droppable");
+    }
   }
 
   @autobind
-  dropHandler(_: DragEvent): void {
-
-    
+  dropHandler(event: DragEvent): void {
+    console.log(event.dataTransfer!.getData('text/plain'));
   }
 
   @autobind
   dragLeaveHandler(_: DragEvent): void {
-    const listEl = this.element.querySelector('ul')!;
-    listEl.classList.remove('droppable');
+    const listEl = this.element.querySelector("ul")!;
+    listEl.classList.remove("droppable");
   }
   configure() {
-    this.element.addEventListener('dragover', this.dragOverHandler);
-    this.element.addEventListener('drop', this.dropHandler);
-    this.element.addEventListener('dragleave', this.dragLeaveHandler);
+    this.element.addEventListener("dragover", this.dragOverHandler);
+    this.element.addEventListener("drop", this.dropHandler);
+    this.element.addEventListener("dragleave", this.dragLeaveHandler);
     // プロジェクト追加時実行する関数の登録
     projectState.addListener((projects: Project[]) => {
       // 関数のtrue false で追加かどうかが決まる
