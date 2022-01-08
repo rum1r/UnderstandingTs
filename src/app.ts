@@ -2,7 +2,6 @@
 interface Draggable {
   dragStartHandler(event: DragEvent): void;
   dragEndHndler(event: DragEvent): void;
-
 }
 /**
  * ドラッグされる場所
@@ -11,21 +10,25 @@ interface DraggTarget {
   // dropしていい場所化を伝える
   dragOverHandler(event: DragEvent): void;
   // dropする
-  dragHandler(event: DragEvent): void;
+  dropHandler(event: DragEvent): void;
   // drag後のエフェクト的な
   dragLeaveHandler(event: DragEvent): void;
 }
 enum ProjectStatus {
-  Active, Finished
+  Active,
+  Finished,
 }
 /**
  *  Project class （入力値）
  */
 class Project {
-
-  constructor(public id: string, public title: string, public description: string, public manday: number, public status: ProjectStatus) {
-  }
-
+  constructor(
+    public id: string,
+    public title: string,
+    public description: string,
+    public manday: number,
+    public status: ProjectStatus
+  ) {}
 }
 
 type Listener<T> = (items: T[]) => void;
@@ -41,8 +44,7 @@ class State<T> {
 /**
  * Project State Management
  */
-class ProjectState extends State<Project>{
-
+class ProjectState extends State<Project> {
   private projects: Project[] = [];
   private static instance: ProjectState;
 
@@ -58,12 +60,11 @@ class ProjectState extends State<Project>{
     return this.instance;
   }
 
-
   /**
    * プロジェクト追加時
-   * @param title 
-   * @param description 
-   * @param manday 
+   * @param title
+   * @param description
+   * @param manday
    */
   addProject(title: string, description: string, manday: number) {
     const newProject = new Project(
@@ -146,9 +147,14 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   hostElement: T;
   element: U;
 
-  constructor(templateId: string, hostElementId: string, insertAtStart: boolean, newElementId?: string) {
+  constructor(
+    templateId: string,
+    hostElementId: string,
+    insertAtStart: boolean,
+    newElementId?: string
+  ) {
     this.templateElement = document.getElementById(
-      templateId,
+      templateId
     )! as HTMLTemplateElement;
     this.hostElement = document.getElementById(hostElementId)! as T;
     const importedNode = document.importNode(
@@ -166,20 +172,26 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   abstract renderContent(): void;
 
   private attach(insertAtBegining: boolean) {
-    this.hostElement.insertAdjacentElement(insertAtBegining ? 'afterbegin' : 'beforeend', this.element);
+    this.hostElement.insertAdjacentElement(
+      insertAtBegining ? "afterbegin" : "beforeend",
+      this.element
+    );
   }
 }
 /**
  * プロジェクトの1つの表示エリア
  */
-class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> implements Draggable {
+class ProjectItem
+  extends Component<HTMLUListElement, HTMLLIElement>
+  implements Draggable
+{
   private project: Project;
 
   get manday() {
     if (this.project.manday < 20) {
-      return this.project.manday.toString() + '人日';
+      return this.project.manday.toString() + "人日";
     } else {
-      return (this.project.manday / 20) + '人月';
+      return this.project.manday / 20 + "人月";
     }
   }
   constructor(hostId: string, project: Project) {
@@ -190,93 +202,114 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> implements 
     this.renderContent();
   }
   @autobind
-    dragStartHandler(event: DragEvent): void {
-      console.log(event);
-        
-    }
+  dragStartHandler(event: DragEvent): void {
+    console.log(event);
+  }
 
-    @autobind
-    dragEndHndler(_: DragEvent): void {
-        console.log('Drag終了');
-    }
-
+  @autobind
+  dragEndHndler(_: DragEvent): void {
+    console.log("Drag終了");
+  }
 
   configure(): void {
-    this.element.addEventListener('dragstart', this.dragStartHandler);
-    this.element.addEventListener('dragend', this.dragEndHndler);
+    this.element.addEventListener("dragstart", this.dragStartHandler);
+    this.element.addEventListener("dragend", this.dragEndHndler);
   }
   renderContent(): void {
-    this.element.querySelector('h2')!.textContent = this.project.title;
-    this.element.querySelector('h3')!.textContent = this.manday;
-    this.element.querySelector('p')!.textContent = this.project.description;
+    this.element.querySelector("h2")!.textContent = this.project.title;
+    this.element.querySelector("h3")!.textContent = this.manday;
+    this.element.querySelector("p")!.textContent = this.project.description;
   }
 }
 
 /**
  * ProjectList Class
  */
-class ProjectList extends Component<HTMLDivElement, HTMLElement>{
+class ProjectList
+  extends Component<HTMLDivElement, HTMLElement>
+  implements DraggTarget
+{
   assignedProjects: Project[];
 
   /**
    * constructor
-   * 
-   * @param type 
+   *
+   * @param type
    */
   constructor(private type: "active" | "finished") {
-    super('project-list', 'app', false, `${type}-projects`)
+    super("project-list", "app", false, `${type}-projects`);
     this.assignedProjects = [];
 
     this.configure();
     this.renderContent();
   }
+  @autobind
+  dragOverHandler(_: DragEvent): void {
+    const listEl = this.element.querySelector('ul')!;
+    listEl.classList.add('droppable');
+  }
 
+  @autobind
+  dropHandler(_: DragEvent): void {
+
+    
+  }
+
+  @autobind
+  dragLeaveHandler(_: DragEvent): void {
+    const listEl = this.element.querySelector('ul')!;
+    listEl.classList.remove('droppable');
+  }
   configure() {
+    this.element.addEventListener('dragover', this.dragOverHandler);
+    this.element.addEventListener('drop', this.dropHandler);
+    this.element.addEventListener('dragleave', this.dragLeaveHandler);
     // プロジェクト追加時実行する関数の登録
     projectState.addListener((projects: Project[]) => {
       // 関数のtrue false で追加かどうかが決まる
-      const relevantProjects = projects.filter(prj => {
-        if (this.type == 'active') {
+      const relevantProjects = projects.filter((prj) => {
+        if (this.type == "active") {
           return prj.status === ProjectStatus.Active;
         }
         return prj.status === ProjectStatus.Finished;
-      })
+      });
       this.assignedProjects = relevantProjects; // `relevant`関連する れればんと
       this.renderProjects();
-    })
+    });
   }
 
   renderContent() {
     const listId = `${this.type}-project-list`;
-    this.element.querySelector('ul')!.id = listId;
-    this.element.querySelector('h2')!.textContent = this.type === 'active' ? '実行中プロジェクト' : '完了プロジェクト';
-
+    this.element.querySelector("ul")!.id = listId;
+    this.element.querySelector("h2")!.textContent =
+      this.type === "active" ? "実行中プロジェクト" : "完了プロジェクト";
   }
 
   /**
    * プロジェクト追加時実行される関数
    */
   private renderProjects() {
-    const listEl = document.getElementById(`${this.type}-project-list`)! as HTMLUListElement;
-    listEl.innerHTML = '';
+    const listEl = document.getElementById(
+      `${this.type}-project-list`
+    )! as HTMLUListElement;
+    listEl.innerHTML = "";
     for (const prjItem of this.assignedProjects) {
       new ProjectItem(listEl.id, prjItem);
     }
   }
-
 }
 
 /**
  * ProjectInput Class
  */
-class ProjectInput extends Component<HTMLDivElement, HTMLFormElement>{
+class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
   // 入力項目
   titleInputElement: HTMLInputElement;
   descriptionInputElement: HTMLInputElement;
   mandayInputElement: HTMLInputElement;
 
   constructor() {
-    super('project-input', 'app', true, 'user-input');
+    super("project-input", "app", true, "user-input");
 
     this.titleInputElement = this.element.querySelector(
       "#title"
@@ -291,15 +324,13 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement>{
   }
 
   /**
-    * イベントの設定
-    */
+   * イベントの設定
+   */
   configure() {
     this.element.addEventListener("submit", this.submitHandler);
   }
 
-  renderContent() {
-
-  }
+  renderContent() {}
 
   private gatherUserInput(): [string, string, number] | void {
     const enteredTitle = this.titleInputElement.value;
@@ -352,11 +383,9 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement>{
       this.clearInputs();
     }
   }
-
-
 }
 
 const prjInput = new ProjectInput();
 
-const activePrjList = new ProjectList('active');
-const finishedPrjList = new ProjectList('finished');
+const activePrjList = new ProjectList("active");
+const finishedPrjList = new ProjectList("finished");
