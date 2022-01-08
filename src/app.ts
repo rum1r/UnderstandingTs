@@ -1,3 +1,20 @@
+// Drag & Drop
+interface Draggable {
+  dragStartHandler(event: DragEvent): void;
+  dragEndHndler(event: DragEvent): void;
+
+}
+/**
+ * ドラッグされる場所
+ */
+interface DraggTarget {
+  // dropしていい場所化を伝える
+  dragOverHandler(event: DragEvent): void;
+  // dropする
+  dragHandler(event: DragEvent): void;
+  // drag後のエフェクト的な
+  dragLeaveHandler(event: DragEvent): void;
+}
 enum ProjectStatus {
   Active, Finished
 }
@@ -152,8 +169,10 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
     this.hostElement.insertAdjacentElement(insertAtBegining ? 'afterbegin' : 'beforeend', this.element);
   }
 }
-
-class ProjectItem extends Component<HTMLUListElement, HTMLLIElement>{
+/**
+ * プロジェクトの1つの表示エリア
+ */
+class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> implements Draggable {
   private project: Project;
 
   get manday() {
@@ -170,8 +189,21 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement>{
     this.configure();
     this.renderContent();
   }
-  configure(): void {
+  @autobind
+    dragStartHandler(event: DragEvent): void {
+      console.log(event);
+        
+    }
 
+    @autobind
+    dragEndHndler(_: DragEvent): void {
+        console.log('Drag終了');
+    }
+
+
+  configure(): void {
+    this.element.addEventListener('dragstart', this.dragStartHandler);
+    this.element.addEventListener('dragend', this.dragEndHndler);
   }
   renderContent(): void {
     this.element.querySelector('h2')!.textContent = this.project.title;

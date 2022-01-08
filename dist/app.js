@@ -114,7 +114,15 @@ class ProjectItem extends Component {
             return (this.project.manday / 20) + '人月';
         }
     }
+    dragStartHandler(event) {
+        console.log(event);
+    }
+    dragEndHndler(_) {
+        console.log('Drag終了');
+    }
     configure() {
+        this.element.addEventListener('dragstart', this.dragStartHandler);
+        this.element.addEventListener('dragend', this.dragEndHndler);
     }
     renderContent() {
         this.element.querySelector('h2').textContent = this.project.title;
@@ -122,6 +130,12 @@ class ProjectItem extends Component {
         this.element.querySelector('p').textContent = this.project.description;
     }
 }
+__decorate([
+    autobind
+], ProjectItem.prototype, "dragStartHandler", null);
+__decorate([
+    autobind
+], ProjectItem.prototype, "dragEndHndler", null);
 class ProjectList extends Component {
     constructor(type) {
         super('project-list', 'app', false, `${type}-projects`);
